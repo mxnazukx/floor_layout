@@ -1,0 +1,146 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Floor layout</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+</head>
+<body>
+	<div>
+		<canvas id="canvas" width="500" height="500"
+			style="border: 1px solid #000000;">
+		</canvas>
+		<button id="plus">+</button>
+		<button id="minus">-</button>
+	</div>
+	<form method="post">
+		<input type="text" name="coord" />
+		<button type="submit">Add</button>
+	</form>
+	<span th:text="${message}"></span>
+	<table>
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Coordinates</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr th:if="${rooms.empty}">
+				<td colspan="2">No Rooms Available</td>
+			</tr>
+			<tr th:each="room : ${rooms}">
+				<td><span th:text="${room.id}"> Title </span></td>
+				<td>
+					<input class="roomsCheckBox" type="checkbox" onclick='handleClick(this);'>
+	  				<label th:if="${point.roomId == room.id}"
+						th:each="point : ${points}"
+						th:text="'(' + ${point.x + ', ' + point.y + '), '}"> Title </label>
+				</td>
+					
+				<td><a th:href="@{/delete/{id}(id=${room.id})}">Delete</a></td>
+				<td><a th:href="@{/update/{id}(id=${room.id})}">Edit</a></td>
+
+			</tr>
+		</tbody>
+	</table>
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+	
+			var points = /*[[${points}]]*/ '';
+		/*]]>*/
+		var scale = 1;
+		window.onload = function() {
+			var plus = document.getElementById('plus');
+			var minus = document.getElementById('minus');
+			
+			plus.addEventListener('click', () => {scale*=2; drawCanvas()});
+
+			minus.addEventListener('click', () => {scale/=2; drawCanvas()});
+			
+			
+			var c = document.getElementById('canvas');
+			var ctx = c.getContext('2d');
+			ctx.translate(c.offsetWidth/2, c.offsetHeight/2);
+			
+			ctx.beginPath();
+			ctx.moveTo(c.offsetWidth/2, 0);
+			ctx.lineTo(c.offsetWidth/-2, 0);
+			ctx.stroke();
+			ctx.moveTo(0, c.offsetHeight/-2);
+			ctx.lineTo(0, c.offsetHeight/2);
+			ctx.stroke();
+
+
+
+			function drawCartesianPoint(ctx, x, y) {
+				ctx.fillRect(x, -(y), 1, 1);
+			}
+
+			function drawCartesianText(ctx, x, y, text) {
+				ctx.fillText(text, x, -(y));
+			}
+			
+			
+			
+			drawCartesianPoint(ctx, -100, -100);
+			drawCartesianPoint(ctx, -100, 100);
+			
+			var rooms = document.getElementsByClassName('roomsCheckBox');
+			
+
+		};
+		var paintedRooms = [];
+		function handleClick(cb){
+			var c = document.getElementById('canvas')
+			var ctx = c.getContext('2d');
+			var ch = cb.parentElement.parentElement.children[0].children[0];
+			var num = ch.textContent || ch.innerText;
+			
+			if(cb.checked) paintedRooms.push(num);
+			else if(!cb.checked){
+				this.paintedRooms = paintedRooms.filter(function(value, index, arr){ 
+			        return value != num;
+			    });
+			}
+			drawCanvas();
+			
+		};
+		function drawCanvas(ctx, c){
+			var c = document.getElementById('canvas');
+			var ctx = c.getContext('2d');
+			ctx.clearRect(-c.offsetWidth, -c.offsetHeight, c.offsetWidth*2, c.offsetHeight*2);
+			ctx.beginPath();
+			ctx.moveTo(c.offsetWidth/2, 0);
+			ctx.lineTo(c.offsetWidth/-2, 0);
+			ctx.stroke();
+			ctx.moveTo(0, c.offsetHeight/-2);
+			ctx.lineTo(0, c.offsetHeight/2);
+			ctx.stroke();
+			
+			for(var l = 0; l < paintedRooms.length; l++){
+				var room = paintedRooms[l];
+				
+				draw(room);
+			}
+			
+			function draw(number){
+				
+				var checkedPoints = [];
+				
+				for(var i = 0; i < points.length; i++){
+					if(points[i].roomId == number) checkedPoints.push(points[i]);
+				}
+				ctx.moveTo(checkedPoints[0].x*scale, -checkedPoints[0].y*scale);
+				for(var i = 1; i < checkedPoints.length; i++){
+					var point = checkedPoints[i];
+					ctx.lineTo(point.x*scale, -point.y*scale);
+				}
+				ctx.lineTo(checkedPoints[0].x*scale, -checkedPoints[0].y*scale)
+				ctx.stroke();
+			}
+		}
+		
+	</script>
+</body>
+</html>
